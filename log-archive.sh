@@ -1,20 +1,42 @@
 #!/bin/bash
+archive_logs() {
+    sudo -v
+    echo "Archiving logs from $1"
 
-sudo -v
-echo "Archiving logs from $1"
+    outputdir=/var/log_archive
+    if [ ! -d $outputdir ]; then
+        echo "Creating directory $outputdir"
+        sudo mkdir -p $outputdir
+    fi
 
-outputdir=/var/log_archive
-sudo mkdir -p $outputdir
-echo "Setting output directory to $outputdir"
+    outfile="$outputdir/logs_archive_${timestamp=$(date +"%Y%m%d_%H%M%S")}.tar.gz"
+    echo "Compressing logs from $1 to $outfile"
+    sudo tar -czf "$outfile" $1
+    
+    echo "Clearing logs from $1"
+    sudo rm -r $1/*
+}
 
-timestamp=$(date +"%Y%m%d_%H%M%S")
-outfile="$outputdir/logs_archive_$timestamp.tar.gz"
-echo "Creating output file $outfile"
+echo "Welcome to the log archive tool"
+while true; do
+    echo "1. Archive Logs"
+    echo "2. Change Log Archive Schedule"
+    echo "3. End"
 
-echo "Compressing logs from $1 to $outfile"
-sudo tar -czf "$outfile" $1
+    read -rp "Choose an option 1-3: " menuChoice
 
-echo "Clearing Logs from $1"
-sudo rm -r $1/*
-
-ls /var/log_archive
+    case $menuChoice in
+        1) echo "Beginning log archival process"
+           read -p "What directory do you want to archive? Default is " -i /var/log -e dirChoice
+           echo "Selected directory is $dirChoice"
+           archive_logs $dirChoice
+        ;;
+        2) echo "Changing log archival schedule"
+        ;;
+        3) echo "Goodbye"
+           break
+        ;;
+        *) echo "invalid choice. try again"
+        ;;
+    esac
+done
